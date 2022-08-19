@@ -3,12 +3,9 @@ using System.Collections;
 using System.Data.SqlClient;
 using System.Data;
 //Updates in Progress:
-//Add groupby
-//All features complete, add errors for wrong type of function calls
-//(if where!="" and what!="" then wherewhat="" but not vice versa and         
-//if op=in or not in, must contain brackets())
+//Add function descriptions....
 namespace SQL_Con
-{
+{ 
     public class SQLCommands
     {
         string databasename;
@@ -57,12 +54,19 @@ namespace SQL_Con
                 cmdstr += " where " + wherecolname + " " + op + "'" + what + "'";
             return cmdstr;
         }
+        public class WrongSQLCommand : Exception
+        {
+            public WrongSQLCommand(string message) : base(message)
+            {
+
+            }
+        }
         public SQLCommands(string databasename)
         {
             this.databasename = databasename;
         }
 
-        public SqlDataReader selectdata(string tablename, string colname = "*", string wherecolname = "", string op = "=", string what = "", string wherewhat = "", string orderby = "",bool desc=false)
+        public SqlDataReader selectdata(string tablename, string colname = "*", string wherecolname = "", string op = "=", string what = "", string wherewhat = "", string groupby = "", string orderby = "",bool desc=false)
         //select colname from tablename where wherecolname op what
         //For bigger commands in wherecolname op what commands use wherewhat string
         {
@@ -71,18 +75,27 @@ namespace SQL_Con
                 cmdstr += cmdstrwhere(wherecolname, what, op);
             else
                 cmdstr +=" " +wherewhat;
+            if (groupby != "")
+                cmdstr += " group by " + groupby;
             if (orderby != "")
                 cmdstr += " order by " + orderby;
             if (desc)
                 cmdstr += " desc";
             con = getcon();
-            cmd = new SqlCommand(cmdstr,con);
-            SqlDataReader dr = cmd.ExecuteReader();
-            return dr;
+            cmd = new SqlCommand(cmdstr, con);
+            try
+            {
+                SqlDataReader dr = cmd.ExecuteReader();
+                return dr;
+            }
+            catch(Exception ex)
+            {
+                throw new WrongSQLCommand("The SQL command:" + cmdstr+" is not valid due to "+ ex);
+            }
         }
         //Only Select can be used in a method called disconnected architecture which has less refresh rates and gives 
         //the output of earlier records incase SQL Server is busy
-        public DataTable selectdatadiscon(string tablename, string colname = "*", string wherecolname = "", string op = "=", string what = "", string wherewhat = "",string orderby="",bool desc=false)
+        public DataTable selectdatadiscon(string tablename, string colname = "*", string wherecolname = "", string op = "=", string what = "", string wherewhat = "",string groupby="",string orderby="",bool desc=false)
         //select colname from tablename where wherecolname op what
         //For bigger commands in wherecolname op what commands use wherewhat string
         {
@@ -91,17 +104,26 @@ namespace SQL_Con
                 cmdstr += cmdstrwhere(wherecolname, what,op);
             else
                 cmdstr += " " + wherewhat;
+            if (groupby != "")
+                cmdstr += " group by " + groupby;
             if (orderby != "")
                 cmdstr += " order by " + orderby;
             if (desc)
                 cmdstr += " desc";
             con = getcon();
-            cmd = new SqlCommand(cmdstr,con);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            DataSet ds = new DataSet();
-            da.Fill(ds);
-            DataTable dt = ds.Tables[0];
-            return dt;
+            try
+            {
+                cmd = new SqlCommand(cmdstr, con);
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataSet ds = new DataSet();
+                da.Fill(ds);
+                DataTable dt = ds.Tables[0];
+                return dt;
+            }
+            catch (Exception ex)
+            {
+                throw new WrongSQLCommand("The SQL command:" + cmdstr + " is not valid due to " + ex);
+            }
         }
         public List<List<string>> SQL_Lst(SqlDataReader dr=null,DataTable dt=null)
         {
@@ -157,7 +179,14 @@ namespace SQL_Con
             cmd = new SqlCommand(cmdstri+valstr,con);
             foreach (DictionaryEntry field in colfields)
                 cmd.Parameters.AddWithValue("@" + field.Key, field.Value);
-            cmd.ExecuteNonQuery();
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new WrongSQLCommand("The SQL command:" + cmdstri + valstr + "is not valid due to " + ex);
+            }
 
         }
         public void deletedata(string tablename, string wherecolname = "", string op = "=", string what = "", string wherewhat = "")
@@ -170,8 +199,15 @@ namespace SQL_Con
             else
                 cmdstr += " " + wherewhat;
             con = getcon();
-            cmd = new SqlCommand(cmdstr,con);
-            cmd.ExecuteNonQuery();
+            try
+            {
+                cmd = new SqlCommand(cmdstr, con);
+                cmd.ExecuteNonQuery();
+            }
+            catch(Exception ex)
+            {
+                throw new WrongSQLCommand("The SQL command:" + cmdstr + " is not valid due to " + ex);
+            }
         }
         public void updatedata(string tablename, Hashtable colfields, string wherecolname = "", string op = "=", string what = "",string wherewhat="")
         {
@@ -204,8 +240,15 @@ namespace SQL_Con
             else
                 cmdstr += " " + wherewhat;
             con = getcon();
-            cmd = new SqlCommand(cmdstr, con);
-            cmd.ExecuteNonQuery();
+            try
+            {
+                cmd = new SqlCommand(cmdstr, con);
+                cmd.ExecuteNonQuery();
+            }
+            catch(Exception ex)
+            {
+                throw new WrongSQLCommand("The SQL command:" + cmdstr + " is not valid due to " + ex);
+            }
         }
 
     }
