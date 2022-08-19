@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Data.SqlClient;
 using System.Data;
-//Updates in Progress:
-//Add function descriptions....
 namespace SQL_Con
 { 
+/// <summary>
+/// A Class Library for applying basic SQL Commands.
+/// Takes the database name as a parameter.
+/// </summary>
     public class SQLCommands
     {
         string databasename;
@@ -54,6 +56,9 @@ namespace SQL_Con
                 cmdstr += " where " + wherecolname + " " + op + "'" + what + "'";
             return cmdstr;
         }
+        /// <summary>
+        /// If a wrong SQL Command is executed please apply the following exception
+        /// </summary>
         public class WrongSQLCommand : Exception
         {
             public WrongSQLCommand(string message) : base(message)
@@ -61,11 +66,28 @@ namespace SQL_Con
 
             }
         }
+        /// <summary>
+        /// Constructor which takes the database handled by the library as a parameter. 
+        /// </summary>
+        /// <param name="databasename"></param>
         public SQLCommands(string databasename)
         {
             this.databasename = databasename;
         }
-
+        /// <summary>
+        ///Outputs the following command:select colname from tablename where wherecolname op what
+        /// </summary>
+        /// <param name="tablename">Takes the tablename as input, Its a required parameter</param>
+        /// <param name="colname">Takes the column names as input, add ',' multiple columns: Its a optional parameter</param>
+        /// <param name="wherecolname">Takes the column name required for condition, its an optional parameter</param>
+        /// <param name="op">Takes the operator required for condition, its an optional parameter</param>
+        /// <param name="what">Takes the value required to be compared with condition, its an optional parameter</param>
+        /// <param name="wherewhat">In case the commands are big in wherecolname op what commands use wherewhat string</param>
+        /// <param name="groupby">Groups the output as per a specific column</param>
+        /// <param name="orderby">Orders the output as per a specific column</param>
+        /// <param name="desc">If orderby is active order in desc</param>
+        /// <returns>Returns a SQLDataReader object with all the output columns</returns>
+        /// <exception cref="WrongSQLCommand">Incase the command created is invalid this exception occurs</exception>
         public SqlDataReader selectdata(string tablename, string colname = "*", string wherecolname = "", string op = "=", string what = "", string wherewhat = "", string groupby = "", string orderby = "",bool desc=false)
         //select colname from tablename where wherecolname op what
         //For bigger commands in wherecolname op what commands use wherewhat string
@@ -95,6 +117,22 @@ namespace SQL_Con
         }
         //Only Select can be used in a method called disconnected architecture which has less refresh rates and gives 
         //the output of earlier records incase SQL Server is busy
+        /// <summary>
+        ///select colname from tablename where wherecolname op what
+        ///Only Select can be used in a method called disconnected architecture which has less refresh rates and 
+        ///gives the output of earlier records incase SQL Server is busy
+        /// </summary>
+        /// <param name="tablename">Takes the tablename as input, Its a required parameter</param>
+        /// <param name="colname">Takes the column names as input, add ',' multiple columns: Its a optional parameter</param>
+        /// <param name="wherecolname">Takes the column name required for condition, its an optional parameter</param>
+        /// <param name="op">Takes the operator required for condition, its an optional parameter</param>
+        /// <param name="what">Takes the value required to be compared with condition, its an optional parameter</param>
+        /// <param name="wherewhat">In case the commands are big in wherecolname op what commands use wherewhat string</param>
+        /// <param name="groupby">Groups the output as per a specific column</param>
+        /// <param name="orderby">Orders the output as per a specific column</param>
+        /// <param name="desc">If orderby is active order in desc</param>
+        /// <returns>Returns a SQLDataReader object with all the output columns</returns>
+        /// <exception cref="WrongSQLCommand">Incase the command created is invalid this exception occurs</exception>
         public DataTable selectdatadiscon(string tablename, string colname = "*", string wherecolname = "", string op = "=", string what = "", string wherewhat = "",string groupby="",string orderby="",bool desc=false)
         //select colname from tablename where wherecolname op what
         //For bigger commands in wherecolname op what commands use wherewhat string
@@ -125,6 +163,13 @@ namespace SQL_Con
                 throw new WrongSQLCommand("The SQL command:" + cmdstr + " is not valid due to " + ex);
             }
         }
+        /// <summary>
+        /// Takes either a SQL DataReader Object or a DataTable Object and converts into a 2D List.
+        /// Any one value is optional, incase both are valid, gives a combined list.
+        /// </summary>
+        /// <param name="dr">SQL DataReader Object</param>
+        /// <param name="dt">DataTable Object</param>
+        /// <returns></returns>
         public List<List<string>> SQL_Lst(SqlDataReader dr=null,DataTable dt=null)
         {
             List<List<string>> dlst = new List<List<string>>();
@@ -155,6 +200,11 @@ namespace SQL_Con
             }
             return dlst;
         }
+        /// <summary>
+        /// Takes a tablename in the database as input and gets all the column names and its column type as a Dictionary
+        /// </summary>
+        /// <param name="tablename">TableName</param>
+        /// <returns>Dictionary:{columnname,columntype}</returns>
         public Dictionary<string, string> getcolname(string tablename)
         //select column_name,data_type from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME=tablename
         {
@@ -170,6 +220,12 @@ namespace SQL_Con
             dr.Close();
             return dct;
         }
+        /// <summary>
+        /// insert into tablename(colfield1,colfield2,.....,colfieldn) values(@colfield1,@colfield2,.....,@colfieldn)
+        /// </summary>
+        /// <param name="tablename">Takes the tablename as input, Its a required parameter</param>
+        /// <param name="colfields">Takes the column fields as a Hashtable object:{colfield1,@colfield1,.....}, Its a required parameter</param>
+        /// <exception cref="WrongSQLCommand">Incase the command created is invalid this exception occurs</exception>
         public void insertdata(string tablename, Hashtable colfields)
         //insert into tablename(colfield1,colfield2,.....,colfieldn) values(@colfield1,@colfield2,.....,@colfieldn)
         {
@@ -189,6 +245,16 @@ namespace SQL_Con
             }
 
         }
+        /// <summary>
+        /// delete from tablename where wherecolname op what
+        ///For bigger commands in wherecolname op what commands use wherewhat string
+        /// </summary>
+        /// <param name="tablename">Takes the tablename as input, Its a required parameter</param>
+        /// <param name="wherecolname">Takes the column name required for condition, its an optional parameter</param>
+        /// <param name="op">Takes the operator required for condition, its an optional parameter</param>
+        /// <param name="what">Takes the value required to be compared with condition, its an optional parameter</param>
+        /// <param name="wherewhat">In case the commands are big in wherecolname op what commands use wherewhat string</param>
+        /// <exception cref="WrongSQLCommand">Incase the command created is invalid this exception occurs</exception>
         public void deletedata(string tablename, string wherecolname = "", string op = "=", string what = "", string wherewhat = "")
         //delete from tablename where wherecolname op what
         //For bigger commands in wherecolname op what commands use wherewhat string
@@ -209,10 +275,21 @@ namespace SQL_Con
                 throw new WrongSQLCommand("The SQL command:" + cmdstr + " is not valid due to " + ex);
             }
         }
+        /// <summary>
+        /// update table_name set colfield1=@colfield1,colfield2=@colfield2,.....colfieldn=@colfieldn where wherecolname op what
+        ///For bigger commands in wherecolname op what commands use wherewhat string
+        /// </summary>
+        /// <param name="tablename">Takes the tablename as input, Its a required parameter</param>
+        /// <param name="colfields">Takes the column fields as a Hashtable object:{colfield1,@colfield1,.....}, Its a required parameter</param>
+        /// <param name="wherecolname">Takes the column name required for condition, its an optional parameter</param>
+        /// <param name="op">Takes the operator required for condition, its an optional parameter</param>
+        /// <param name="what">Takes the value required to be compared with condition, its an optional parameter</param>
+        /// <param name="wherewhat">In case the commands are big in wherecolname op what commands use wherewhat string</param>
+        /// <exception cref="WrongSQLCommand">Incase the command created is invalid this exception occurs</exception>
         public void updatedata(string tablename, Hashtable colfields, string wherecolname = "", string op = "=", string what = "",string wherewhat="")
+        //update table_name set colfield1=@colfield1,colfield2=@colfield2,.....colfieldn=@colfieldn where wherecolname op what
+        //For bigger commands in wherecolname op what commands use wherewhat string
         {
-            //update table_name set colfield1=@colfield1,colfield2=@colfield2,.....colfieldn=@colfieldn where wherecolname op what
-            //For bigger commands in wherecolname op what commands use wherewhat string
             string cmdstr = "update " + tablename + " set ";
             int i = 0, num_int;
             float num_flt;
@@ -250,6 +327,5 @@ namespace SQL_Con
                 throw new WrongSQLCommand("The SQL command:" + cmdstr + " is not valid due to " + ex);
             }
         }
-
     }
 }
