@@ -112,6 +112,7 @@ namespace SQL_Con
             }
             catch(Exception ex)
             {
+                
                 throw new WrongSQLCommand("The SQL command:" + cmdstr+" is not valid due to "+ ex);
             }
         }
@@ -208,7 +209,7 @@ namespace SQL_Con
         public Dictionary<string, string> getcolname(string tablename)
         //select column_name,data_type from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME=tablename
         {
-            SqlDataReader dr = selectdata("INFORMATION_SCHEMA.COLUMNS", "column_name,data_type", "TABLE_NAME", tablename);
+            SqlDataReader dr = selectdata(tablename:"INFORMATION_SCHEMA.COLUMNS", colname:"column_name,data_type", wherecolname:"TABLE_NAME", what:tablename);
             Dictionary<string, string> dct = new Dictionary<string, string>();
             while (dr.Read())
             {
@@ -241,7 +242,7 @@ namespace SQL_Con
             }
             catch (Exception ex)
             {
-                throw new WrongSQLCommand("The SQL command:" + cmdstri + valstr + "is not valid due to " + ex);
+                throw new WrongSQLCommand("The SQL command:" + cmdstri + valstr + "is not valid due to " + ex.Message);
             }
 
         }
